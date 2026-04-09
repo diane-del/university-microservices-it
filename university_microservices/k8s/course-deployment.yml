@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: course-service
+  labels:
+    app: course-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: course-service
+  template:
+    metadata:
+      labels:
+        app: course-service
+    spec:
+      containers:
+        - name: course-service
+          image: gcr.io/TON-PROJECT-ID/course-service:1.0   # ← changer TON-PROJECT-ID
+          ports:
+            - containerPort: 8083
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-course:5432/coursesdb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: admin
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: admin123
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: course-service
+spec:
+  selector:
+    app: course-service
+  ports:
+    - protocol: TCP
+      port: 8083
+      targetPort: 8083
+  type: ClusterIP
+
+---
+# Base de données PostgreSQL pour Course Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-course
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-course
+  template:
+    metadata:
+      labels:
+        app: postgres-course
+    spec:
+      containers:
+        - name: postgres-course
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: coursesdb
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_PASSWORD
+              value: admin123
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-course
+spec:
+  selector:
+    app: postgres-course
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP

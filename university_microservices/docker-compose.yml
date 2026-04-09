@@ -1,0 +1,186 @@
+
+services:
+
+  # ════════════════════════════════════════════════════
+  # DATABASE POSTGRESQL — uno per servizio
+  # ════════════════════════════════════════════════════
+
+  postgres-studenti:
+    image: postgres:15
+    container_name: postgres-studenti
+    environment:
+      POSTGRES_DB: studentidb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-studenti-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d studentidb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-corsi:
+    image: postgres:15
+    container_name: postgres-corsi
+    environment:
+      POSTGRES_DB: corsidb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres-corsi-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d corsidb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-iscrizioni:
+    image: postgres:15
+    container_name: postgres-iscrizioni
+    environment:
+      POSTGRES_DB: iscrizionidb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-iscrizioni-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d iscrizionidb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-voti:
+    image: postgres:15
+    container_name: postgres-voti
+    environment:
+      POSTGRES_DB: votidb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres-voti-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d votidb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ════════════════════════════════════════════════════
+  # MICROSERVIZI SPRING BOOT
+  # ════════════════════════════════════════════════════
+
+  servizio-studenti:
+    build: ./student-service
+    container_name: servizio-studenti
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres-studenti:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-studenti:5432/studentidb
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+  servizio-corsi:
+    build: ./course-service
+    container_name: servizio-corsi
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres-corsi:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-corsi:5432/corsidb
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+
+  servizio-iscrizioni:
+    build: ./enrollment-service
+    container_name: servizio-iscrizioni
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres-iscrizioni:
+        condition: service_healthy
+      servizio-studenti:
+        condition: service_started
+      servizio-corsi:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-iscrizioni:5432/iscrizionidb
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVIZI_STUDENTI_URL: http://servizio-studenti:8081
+      SERVIZI_CORSI_URL: http://servizio-corsi:8083
+
+  servizio-voti:
+    build: ./grade-service
+    container_name: servizio-voti
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres-voti:
+        condition: service_healthy
+      servizio-studenti:
+        condition: service_started
+      servizio-corsi:
+        condition: service_started
+      servizio-iscrizioni:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-voti:5432/votidb
+      SPRING_DATASOURCE_USERNAME: admin
+      SPRING_DATASOURCE_PASSWORD: admin123
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SERVIZI_STUDENTI_URL: http://servizio-studenti:8081
+      SERVIZI_CORSI_URL: http://servizio-corsi:8083
+      SERVIZI_ISCRIZIONI_URL: http://servizio-iscrizioni:8082
+
+  servizio-rapporti:
+    build: ./report-service
+    container_name: servizio-rapporti
+    ports:
+      - "8085:8085"
+    depends_on:
+      - servizio-studenti
+      - servizio-corsi
+      - servizio-iscrizioni
+      - servizio-voti
+    environment:
+      SERVIZI_STUDENTI_URL: http://servizio-studenti:8081
+      SERVIZI_CORSI_URL: http://servizio-corsi:8083
+      SERVIZI_ISCRIZIONI_URL: http://servizio-iscrizioni:8082
+      SERVIZI_VOTI_URL: http://servizio-voti:8084
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - servizio-studenti
+      - servizio-corsi
+      - servizio-iscrizioni
+      - servizio-voti
+      - servizio-rapporti
+
+# ════════════════════════════════════════════════════
+# VOLUMI — dati persistenti
+# ════════════════════════════════════════════════════
+volumes:
+  postgres-studenti-data:
+  postgres-corsi-data:
+  postgres-iscrizioni-data:
+  postgres-voti-data:

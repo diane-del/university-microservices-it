@@ -1,0 +1,36 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: servizio-voti
+
+  datasource:
+    url: jdbc:postgresql://localhost:5435/votidb
+    username: admin
+    password: admin123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# URL dei servizi chiamati via Feign
+servizi:
+  studenti:
+    url: http://localhost:8081
+  corsi:
+    url: http://localhost:8083
+  iscrizioni:
+    url: http://localhost:8082
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs

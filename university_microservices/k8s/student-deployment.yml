@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-service
+  labels:
+    app: student-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: student-service
+  template:
+    metadata:
+      labels:
+        app: student-service
+    spec:
+      containers:
+        - name: student-service
+          image: gcr.io/TON-PROJECT-ID/student-service:1.0   # ← changer TON-PROJECT-ID
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-student:5432/studentsdb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: admin
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: admin123
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: student-service      # les autres pods utilisent ce nom pour communiquer
+spec:
+  selector:
+    app: student-service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP             # accessible seulement à l'intérieur du cluster
+
+---
+# Base de données PostgreSQL pour Student Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-student
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-student
+  template:
+    metadata:
+      labels:
+        app: postgres-student
+    spec:
+      containers:
+        - name: postgres-student
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: studentsdb
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_PASSWORD
+              value: admin123
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-student
+spec:
+  selector:
+    app: postgres-student
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP

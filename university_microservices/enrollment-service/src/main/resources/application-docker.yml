@@ -1,0 +1,28 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: enrollment-service
+
+  datasource:
+    url: jdbc:postgresql://postgres-enrollment:5432/enrollmentsdb
+    username: admin
+    password: admin123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+# En Docker Compose et K8s, les services se trouvent par leur nom de conteneur
+services:
+  student:
+    url: http://student-service:8081
+  course:
+    url: http://course-service:8083

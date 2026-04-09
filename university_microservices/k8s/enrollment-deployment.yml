@@ -1,0 +1,106 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enrollment-service
+  labels:
+    app: enrollment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enrollment-service
+  template:
+    metadata:
+      labels:
+        app: enrollment-service
+    spec:
+      containers:
+        - name: enrollment-service
+          image: gcr.io/TON-PROJECT-ID/enrollment-service:1.0   # ← changer TON-PROJECT-ID
+          ports:
+            - containerPort: 8082
+          env:
+            - name: SPRING_DATASOURCE_URL
+              value: jdbc:postgresql://postgres-enrollment:5432/enrollmentsdb
+            - name: SPRING_DATASOURCE_USERNAME
+              value: admin
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: admin123
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: update
+            # URLs inter-services — K8s résout ces noms automatiquement
+            - name: SERVICES_STUDENT_URL
+              value: http://student-service:8081
+            - name: SERVICES_COURSE_URL
+              value: http://course-service:8083
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: enrollment-service
+spec:
+  selector:
+    app: enrollment-service
+  ports:
+    - protocol: TCP
+      port: 8082
+      targetPort: 8082
+  type: ClusterIP
+
+---
+# Base de données PostgreSQL pour Enrollment Service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres-enrollment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres-enrollment
+  template:
+    metadata:
+      labels:
+        app: postgres-enrollment
+    spec:
+      containers:
+        - name: postgres-enrollment
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_DB
+              value: enrollmentsdb
+            - name: POSTGRES_USER
+              value: admin
+            - name: POSTGRES_PASSWORD
+              value: admin123
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-enrollment
+spec:
+  selector:
+    app: postgres-enrollment
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+  type: ClusterIP
