@@ -1,4 +1,0 @@
-com\university\student\entity\Student.class
-com\university\student\entity\Student$StatoStudente.class
-com\university\student\repository\StudentRepository.class
-com\university\student\SwaggerConfig.class
