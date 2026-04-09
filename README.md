@@ -6,3 +6,5 @@ Complete University Management Microservices Architecture built with Spring Boot
 ![Docker](https://img.shields.io/badge/Docker-Containerized-blue)
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestrated-326CE5)
 ![Architecture](https://img.shields.io/badge/Architecture-Microservices-orange)
+
+<img width="1259" height="836" alt="image" src="https://github.com/user-attachments/assets/94e80dd3-2965-4064-9e62-2addb4548cb5" />
