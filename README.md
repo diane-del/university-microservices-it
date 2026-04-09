@@ -8,14 +8,14 @@ Complete University Management Microservices Architecture built with Spring Boot
 ![Architecture](https://img.shields.io/badge/Architecture-Microservices-orange)
 
 i've worked with:
-Spring Boot microservices
-OpenFeign
-Spring Cloud Gateway
-PostgreSQL
-Docker
-Kubernetes
-ArgoCD
-Git branching strategy
-GitOps deployment model
+#Spring Boot microservices
+#OpenFeign
+#Spring Cloud Gateway
+#PostgreSQL
+#Docker
+#Kubernetes
+#ArgoCD
+#Git branching strategy
+#GitOps deployment model
 
 <img width="1259" height="836" alt="image" src="https://github.com/user-attachments/assets/94e80dd3-2965-4064-9e62-2addb4548cb5" />
